@@ -8,6 +8,8 @@ import { useSupabaseAuth } from "../integrations/supabase/auth.jsx";
 const JobsManagement = () => {
   const { session } = useSupabaseAuth();
   const [jobTitle, setJobTitle] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [jobArea, setJobArea] = useState("");
   const [editingJob, setEditingJob] = useState(null);
   const navigate = useNavigate();
 
@@ -22,19 +24,23 @@ const JobsManagement = () => {
   }
 
   const handleAddJob = () => {
-    if (jobTitle.trim() !== "") {
+    if (jobTitle.trim() !== "" && jobType.trim() !== "" && jobArea.trim() !== "") {
       if (editingJob) {
-        updateJobMutation.mutate({ ...editingJob, jobs_title: jobTitle });
+        updateJobMutation.mutate({ ...editingJob, jobs_title: jobTitle, job_type: jobType, job_area: jobArea });
         setEditingJob(null);
       } else {
-        addJobMutation.mutate({ jobs_title: jobTitle });
+        addJobMutation.mutate({ jobs_title: jobTitle, job_type: jobType, job_area: jobArea });
       }
       setJobTitle("");
+      setJobType("");
+      setJobArea("");
     }
   };
 
   const handleEditJob = (job) => {
     setJobTitle(job.jobs_title);
+    setJobType(job.job_type);
+    setJobArea(job.job_area);
     setEditingJob(job);
   };
 
@@ -65,6 +71,24 @@ const JobsManagement = () => {
               placeholder="Enter job title" 
             />
           </FormControl>
+          <FormControl id="job-type">
+            <FormLabel>Job Type</FormLabel>
+            <Input 
+              type="text" 
+              value={jobType} 
+              onChange={(e) => setJobType(e.target.value)} 
+              placeholder="Enter job type" 
+            />
+          </FormControl>
+          <FormControl id="job-area">
+            <FormLabel>Job Area</FormLabel>
+            <Input 
+              type="text" 
+              value={jobArea} 
+              onChange={(e) => setJobArea(e.target.value)} 
+              placeholder="Enter job area" 
+            />
+          </FormControl>
           <Button mt={4} colorScheme="teal" onClick={handleAddJob}>
             {editingJob ? "Update Job" : "Add Job"}
           </Button>
@@ -76,7 +100,11 @@ const JobsManagement = () => {
             {jobs.map((job) => (
               <ListItem key={job.id} p={2} borderWidth="1px" borderRadius="md">
                 <HStack justify="space-between">
-                  <Text>{job.jobs_title}</Text>
+                  <VStack align="start">
+                    <Text><strong>Title:</strong> {job.jobs_title}</Text>
+                    <Text><strong>Type:</strong> {job.job_type}</Text>
+                    <Text><strong>Area:</strong> {job.job_area}</Text>
+                  </VStack>
                   <HStack>
                     <IconButton 
                       icon={<FaEdit />} 
