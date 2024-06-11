@@ -1,22 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Container, VStack, Heading, Box, FormControl, FormLabel, Input, Button, List, ListItem, Text, IconButton, HStack } from "@chakra-ui/react";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Index = () => {
   const [events, setEvents] = useState([]);
   const [eventName, setEventName] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  useEffect(() => {
+    const storedEvents = JSON.parse(localStorage.getItem("events")) || [];
+    setEvents(storedEvents);
+  }, []);
 
   const addEvent = () => {
     if (eventName.trim() !== "") {
+      let updatedEvents;
       if (editingIndex !== null) {
-        const updatedEvents = [...events];
+        updatedEvents = [...events];
         updatedEvents[editingIndex] = eventName;
-        setEvents(updatedEvents);
         setEditingIndex(null);
       } else {
-        setEvents([...events, eventName]);
+        updatedEvents = [...events, eventName];
       }
+      setEvents(updatedEvents);
+      localStorage.setItem("events", JSON.stringify(updatedEvents)); // Store events in localStorage
       setEventName("");
     }
   };
@@ -29,6 +38,11 @@ const Index = () => {
   const deleteEvent = (index) => {
     const updatedEvents = events.filter((_, i) => i !== index);
     setEvents(updatedEvents);
+    localStorage.setItem("events", JSON.stringify(updatedEvents)); // Update localStorage
+  };
+
+  const viewEventDetails = (index) => {
+    navigate(`/event/${index}`); // Navigate to event details page
   };
 
   return (
@@ -55,19 +69,19 @@ const Index = () => {
           <Heading as="h2" size="lg" mb={4}>Event List</Heading>
           <List spacing={3}>
             {events.map((event, index) => (
-              <ListItem key={index} p={2} borderWidth="1px" borderRadius="md">
+              <ListItem key={index} p={2} borderWidth="1px" borderRadius="md" onClick={() => viewEventDetails(index)} cursor="pointer">
                 <HStack justify="space-between">
                   <Text>{event}</Text>
                   <HStack>
                     <IconButton 
                       icon={<FaEdit />} 
                       aria-label="Edit Event" 
-                      onClick={() => editEvent(index)} 
+                      onClick={(e) => { e.stopPropagation(); editEvent(index); }} 
                     />
                     <IconButton 
                       icon={<FaTrash />} 
                       aria-label="Delete Event" 
-                      onClick={() => deleteEvent(index)} 
+                      onClick={(e) => { e.stopPropagation(); deleteEvent(index); }} 
                     />
                   </HStack>
                 </HStack>
