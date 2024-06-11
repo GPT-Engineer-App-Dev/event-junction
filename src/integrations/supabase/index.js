@@ -82,6 +82,10 @@ export const useEvents = () => useQuery({
     queryKey: ['events'],
     queryFn: () => fromSupabase(supabase.from('events').select('*')),
 });
+export const useEvent = (id) => useQuery({
+    queryKey: ['event', id],
+    queryFn: () => fromSupabase(supabase.from('events').select('*').eq('id', id).single()),
+});
 export const useAddEvent = () => {
     const queryClient = useQueryClient();
     return useMutation({
