@@ -1,49 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Container, VStack, Heading, Box, FormControl, FormLabel, Input, Button, List, ListItem, Text, IconButton, HStack } from "@chakra-ui/react";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
+import { useEvents, useAddEvent, useUpdateEvent, useDeleteEvent } from "../integrations/supabase/index.js";
 
 const Index = () => {
-  const [events, setEvents] = useState([]);
+  
   const [eventName, setEventName] = useState("");
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
   const navigate = useNavigate(); // Initialize useNavigate
 
-  useEffect(() => {
-    const storedEvents = JSON.parse(localStorage.getItem("events")) || [];
-    setEvents(storedEvents);
-  }, []);
+  const { data: events, isLoading, isError } = useEvents();
+  const addEventMutation = useAddEvent();
+  const updateEventMutation = useUpdateEvent();
+  const deleteEventMutation = useDeleteEvent();
 
-  const addEvent = () => {
+  const handleAddEvent = () => {
     if (eventName.trim() !== "") {
-      let updatedEvents;
-      if (editingIndex !== null) {
-        updatedEvents = [...events];
-        updatedEvents[editingIndex] = eventName;
-        setEditingIndex(null);
+      if (editingEvent) {
+        updateEventMutation.mutate({ ...editingEvent, name: eventName });
+        setEditingEvent(null);
       } else {
-        updatedEvents = [...events, eventName];
+        addEventMutation.mutate({ name: eventName });
       }
-      setEvents(updatedEvents);
-      localStorage.setItem("events", JSON.stringify(updatedEvents)); // Store events in localStorage
       setEventName("");
     }
   };
 
-  const editEvent = (index) => {
-    setEventName(events[index]);
-    setEditingIndex(index);
+  const handleEditEvent = (event) => {
+    setEventName(event.name);
+    setEditingEvent(event);
   };
 
-  const deleteEvent = (index) => {
-    const updatedEvents = events.filter((_, i) => i !== index);
-    setEvents(updatedEvents);
-    localStorage.setItem("events", JSON.stringify(updatedEvents)); // Update localStorage
+  const handleDeleteEvent = (id) => {
+    deleteEventMutation.mutate(id);
   };
 
-  const viewEventDetails = (index) => {
-    navigate(`/event/${index}`); // Navigate to event details page
+  const viewEventDetails = (id) => {
+    navigate(`/event/${id}`);
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error loading events</div>;
+  }
 
   return (
     <Container centerContent maxW="container.md" py={8}>
@@ -60,28 +63,28 @@ const Index = () => {
               placeholder="Enter event name" 
             />
           </FormControl>
-          <Button mt={4} colorScheme="teal" onClick={addEvent}>
-            {editingIndex !== null ? "Update Event" : "Add Event"}
+          <Button mt={4} colorScheme="teal" onClick={handleAddEvent}>
+            {editingEvent ? "Update Event" : "Add Event"}
           </Button>
         </Box>
 
         <Box width="100%">
           <Heading as="h2" size="lg" mb={4}>Event List</Heading>
           <List spacing={3}>
-            {events.map((event, index) => (
-              <ListItem key={index} p={2} borderWidth="1px" borderRadius="md" onClick={() => viewEventDetails(index)} cursor="pointer">
+            {events.map((event) => (
+              <ListItem key={event.id} p={2} borderWidth="1px" borderRadius="md" onClick={() => viewEventDetails(event.id)} cursor="pointer">
                 <HStack justify="space-between">
-                  <Text>{event}</Text>
+                  <Text>{event.name}</Text>
                   <HStack>
                     <IconButton 
                       icon={<FaEdit />} 
                       aria-label="Edit Event" 
-                      onClick={(e) => { e.stopPropagation(); editEvent(index); }} 
+                      onClick={(e) => { e.stopPropagation(); handleEditEvent(event); }} 
                     />
                     <IconButton 
                       icon={<FaTrash />} 
                       aria-label="Delete Event" 
-                      onClick={(e) => { e.stopPropagation(); deleteEvent(index); }} 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id); }} 
                     />
                   </HStack>
                 </HStack>
