@@ -5,7 +5,6 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 const Index = () => {
   const [events, setEvents] = useState([]);
   const [eventName, setEventName] = useState("");
-
   const [editingIndex, setEditingIndex] = useState(null);
 
   const addEvent = () => {
